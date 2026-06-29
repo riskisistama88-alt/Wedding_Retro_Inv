@@ -1,0 +1,6 @@
+{
+  "name": "Wedding Adventure Engine",
+  "description": "An interactive 2D open-world pixel art game and wedding invitation experience featuring character exploration, custom quests, live RSVP, digital guestbook, and navigation systems.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
