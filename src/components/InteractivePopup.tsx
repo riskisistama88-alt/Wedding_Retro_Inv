@@ -584,6 +584,71 @@ export default function InteractivePopup({
     }
   };
 
+  if (buildingId === 'kamera') {
+    return (
+      <div 
+        id="rpg-popup-container" 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in font-sans"
+      >
+        {/* Ancient unrolling scroll container */}
+        <div className="relative max-w-md w-full flex flex-col items-center max-h-[95vh]">
+          
+          {/* Top Wooden Roller */}
+          <div className="w-[105%] h-6 bg-gradient-to-b from-[#7c2d12] via-[#b45309] to-[#7c2d12] rounded-full shadow-lg relative flex justify-between items-center z-10 border-y-2 border-black">
+            {/* Golden Knobs */}
+            <div className="w-4 h-8 -ml-2 rounded-md bg-gradient-to-r from-[#fbbf24] to-[#f59e0b] border-2 border-[#7c2d12] shadow-md" />
+            <div className="w-4 h-8 -mr-2 rounded-md bg-gradient-to-l from-[#fbbf24] to-[#f59e0b] border-2 border-[#7c2d12] shadow-md" />
+          </div>
+
+          {/* Parchment Body */}
+          <div className="w-full bg-[#fdf6e2] border-x-8 border-[#d97706]/30 shadow-2xl overflow-hidden flex flex-col max-h-[80vh] relative -my-1 pb-4 border-2 border-amber-900/40 rounded-sm">
+            
+            {/* Decorative Ribbon Hook or shading */}
+            <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-amber-950/25 to-transparent pointer-events-none" />
+            <div className="absolute bottom-0 inset-x-0 h-4 bg-gradient-to-t from-amber-950/15 to-transparent pointer-events-none" />
+            
+            {/* Header */}
+            <header className="px-5 py-3 border-b border-amber-900/10 flex items-center justify-between bg-[#fbf0d0]/55">
+              <div className="flex items-center space-x-2">
+                <span className="text-amber-800 font-retro text-xs animate-pulse">📜</span>
+                <h3 className="text-[11px] uppercase tracking-wider font-extrabold text-amber-950" style={{ fontFamily: 'var(--font-retro)' }}>
+                  Gulungan Kenangan Indah
+                </h3>
+              </div>
+              <button
+                id="close-popup-btn"
+                onClick={onClose}
+                className="p-1.5 bg-amber-950/10 hover:bg-amber-950/20 text-amber-950 rounded-lg transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </header>
+
+            {/* Scroll Content Body with beautiful photos */}
+            <div className="p-5 overflow-y-auto flex-1 space-y-4">
+              {renderContent()}
+            </div>
+
+            {/* Scroll Footer */}
+            <footer className="border-t border-amber-900/10 px-5 py-2.5 flex items-center justify-between text-[8px] font-retro text-amber-800 font-bold bg-[#fbf0d0]/55">
+              <span>ALBUM PETUALANGAN CINTA</span>
+              <span className="text-amber-950 font-mono">Progress: {questCount}/{totalQuests} Spots</span>
+            </footer>
+
+          </div>
+
+          {/* Bottom Wooden Roller */}
+          <div className="w-[105%] h-6 bg-gradient-to-b from-[#7c2d12] via-[#b45309] to-[#7c2d12] rounded-full shadow-lg relative flex justify-between items-center z-10 border-y-2 border-black">
+            {/* Golden Knobs */}
+            <div className="w-4 h-8 -ml-2 rounded-md bg-gradient-to-r from-[#fbbf24] to-[#f59e0b] border-2 border-[#7c2d12] shadow-md" />
+            <div className="w-4 h-8 -mr-2 rounded-md bg-gradient-to-l from-[#fbbf24] to-[#f59e0b] border-2 border-[#7c2d12] shadow-md" />
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
       id="rpg-popup-container" 

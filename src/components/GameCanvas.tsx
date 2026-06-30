@@ -51,6 +51,7 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
   // World setup sizing
   const worldWidth = 1800;
   const worldHeight = 1100;
+  const zoom = 1.6; // High resolution zoomed viewport factor to see player clearly!
 
   // Player position state
   const [player, setPlayer] = useState<Point>({ x: 300, y: 350 });
@@ -58,7 +59,7 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
   const [isMoving, setIsMoving] = useState(false);
   const [activeBuildingId, setActiveBuildingId] = useState<string | null>(null);
 
-  // Virtual Shadow Joystick ("joystick bayangan") State & Reference for smooth, lag-free rendering
+  // Virtual Locked/Shadow Joystick State & Reference for smooth rendering
   const [joystick, setJoystick] = useState<{
     active: boolean;
     startX: number;
@@ -80,12 +81,12 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
   const buildings: Building[] = [
     { 
       id: 'rumah', 
-      name: 'Rumah Mempelai', 
+      name: 'Rumah Lama', 
       x: 300, 
       y: 320, 
       width: 140, 
       height: 120, 
-      color: '#fef08a', 
+      color: '#d97706', 
       icon: '🏠',
       description: 'Mempelai & Orang Tua'
     },
@@ -96,7 +97,7 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
       y: 280, 
       width: 160, 
       height: 140, 
-      color: '#a7f3d0', 
+      color: '#10b981', 
       icon: '🕌',
       description: 'Acara Akad Nikah'
     },
@@ -107,7 +108,7 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
       y: 300, 
       width: 170, 
       height: 130, 
-      color: '#fbcfe8', 
+      color: '#ec4899', 
       icon: '🏛️',
       description: 'Acara Resepsi'
     },
@@ -118,31 +119,31 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
       y: 750, 
       width: 120, 
       height: 120, 
-      color: '#fce7f3', 
+      color: '#fbcfe8', 
       icon: '🌸',
       description: 'Love Story Timeline'
     },
     { 
       id: 'kamera', 
-      name: 'Galeri Foto Retro', 
+      name: 'Gulungan Kenangan', 
       x: 950, 
       y: 700, 
       width: 130, 
       height: 110, 
-      color: '#bfdbfe', 
-      icon: '📷',
-      description: 'Galeri & Album Foto'
+      color: '#f59e0b', 
+      icon: '📜',
+      description: 'Gulungan Galeri Foto'
     },
     { 
       id: 'giftbox', 
-      name: 'Amplop Kado Digital', 
+      name: 'Harta Karun Kado', 
       x: 1450, 
       y: 750, 
       width: 110, 
       height: 110, 
-      color: '#fed7aa', 
-      icon: '🎁',
-      description: 'Hadiah / Digital Gift'
+      color: '#eab308', 
+      icon: '👑',
+      description: 'Amplop / Kado Digital'
     },
     { 
       id: 'buku', 
@@ -151,7 +152,7 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
       y: 450, 
       width: 130, 
       height: 110, 
-      color: '#ddd6fe', 
+      color: '#8b5cf6', 
       icon: '📖',
       description: 'Konfirmasi RSVP & Pesan'
     },
@@ -162,7 +163,7 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
       y: 580, 
       width: 100, 
       height: 110, 
-      color: '#e0f2fe', 
+      color: '#0ea5e9', 
       icon: '🔮',
       description: 'Quest Completion Portal'
     },
@@ -312,8 +313,8 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
     if (!scroller) return;
 
     const { width, height } = scroller.getBoundingClientRect();
-    scroller.scrollLeft = player.x - width / 2;
-    scroller.scrollTop = player.y - height / 2;
+    scroller.scrollLeft = (player.x * zoom) - width / 2;
+    scroller.scrollTop = (player.y * zoom) - height / 2;
   }, [player.x, player.y]);
 
   // Canvas drawing effect
@@ -326,8 +327,11 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
 
     animFrame.current++;
 
-    // Clear canvas
-    ctx.clearRect(0, 0, worldWidth, worldHeight);
+    // Clear zoomed canvas
+    ctx.clearRect(0, 0, worldWidth * zoom, worldHeight * zoom);
+
+    ctx.save();
+    ctx.scale(zoom, zoom);
 
     // 1. Draw Ground Texture & Background Grass
     ctx.fillStyle = '#10b981'; // vibrant emerald grass
@@ -470,62 +474,507 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
       const w = b.width;
       const h = b.height;
 
-      // Drop shadow
+      // Drop shadow for the structure
       ctx.fillStyle = 'rgba(15, 23, 42, 0.15)';
       ctx.fillRect(x - w / 2 + 5, y - h / 2 + 5, w, h);
 
-      // Core building walls
-      ctx.fillStyle = '#ffffff'; // Pristine clean walls
-      ctx.fillRect(x - w / 2, y - h / 2, w, h);
+      if (b.id === 'rumah') {
+        // --- Traditional Old House (Rumah Lama) ---
+        // Raised wooden foundation platform
+        ctx.fillStyle = '#78350f'; // Dark brown pillars
+        ctx.fillRect(x - w/2 + 10, y + h/2 - 20, 8, 20);
+        ctx.fillRect(x + w/2 - 18, y + h/2 - 20, 8, 20);
+        ctx.fillRect(x - 4, y + h/2 - 20, 8, 20);
 
-      // Distinct trim based on station category
-      ctx.fillStyle = b.color;
-      ctx.fillRect(x - w / 2, y + h / 2 - 12, w, 12); // foundation
-      ctx.fillRect(x - w / 2, y - h / 2, w, 10); // roof base trim
+        // Wooden platform base
+        ctx.fillStyle = '#b45309'; // Lighter brown wood
+        ctx.fillRect(x - w/2 + 5, y + h/2 - 24, w - 10, 6);
 
-      // Draw elegant roof triangle
-      ctx.fillStyle = '#3f3f46'; // charcoal dark shingles
-      ctx.beginPath();
-      ctx.moveTo(x - w / 2 - 10, y - h / 2);
-      ctx.lineTo(x, y - h / 2 - 38);
-      ctx.lineTo(x + w / 2 + 10, y - h / 2);
-      ctx.closePath();
-      ctx.fill();
+        // Steps leading up
+        ctx.fillStyle = '#7c2d12';
+        ctx.fillRect(x - 12, y + h/2 - 18, 24, 18);
+        ctx.fillStyle = '#a16207'; // Step treads
+        ctx.fillRect(x - 10, y + h/2 - 15, 20, 2);
+        ctx.fillRect(x - 10, y + h/2 - 9, 20, 2);
 
-      // Front door (dark mahogany wood)
+        // Main Timber Walls
+        ctx.fillStyle = '#854d0e'; // Rustic logs brown
+        ctx.fillRect(x - w/2 + 8, y - h/2 + 10, w - 16, h - 34);
+
+        // Drawing timber lines (logs effect)
+        ctx.fillStyle = '#713f12';
+        for (let ly = y - h/2 + 20; ly < y + h/2 - 24; ly += 14) {
+          ctx.fillRect(x - w/2 + 8, ly, w - 16, 2);
+        }
+
+        // Two cute windows
+        ctx.fillStyle = '#fef08a'; // Glowing warm light
+        ctx.fillRect(x - w/2 + 20, y - 10, 18, 18);
+        ctx.fillRect(x + w/2 - 38, y - 10, 18, 18);
+        // Window frames
+        ctx.strokeStyle = '#451a03';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(x - w/2 + 20, y - 10, 18, 18);
+        ctx.strokeRect(x + w/2 - 38, y - 10, 18, 18);
+        ctx.beginPath();
+        ctx.moveTo(x - w/2 + 29, y - 10); ctx.lineTo(x - w/2 + 29, y + 8);
+        ctx.moveTo(x - w/2 + 20, y - 1); ctx.lineTo(x - w/2 + 38, y - 1);
+        ctx.moveTo(x + w/2 - 29, y - 10); ctx.lineTo(x + w/2 - 29, y + 8);
+        ctx.moveTo(x + w/2 - 38, y - 1); ctx.lineTo(x + w/2 - 20, y - 1);
+        ctx.stroke();
+
+        // Front Door
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(x - 14, y + h/2 - 44, 28, 20);
+        ctx.fillStyle = '#eab308'; // Brass lock plate
+        ctx.fillRect(x - 2, y + h/2 - 34, 4, 6);
+
+        // Grand Pointed layered Roof (Traditional Indonesian style)
+        ctx.fillStyle = '#7c2d12'; // Rich clay tile color
+        ctx.beginPath();
+        ctx.moveTo(x - w/2 - 10, y - h/2 + 10);
+        ctx.lineTo(x, y - h/2 - 32);
+        ctx.lineTo(x + w/2 + 10, y - h/2 + 10);
+        ctx.closePath();
+        ctx.fill();
+
+        // Top layered peak roof cap
+        ctx.fillStyle = '#451a03';
+        ctx.beginPath();
+        ctx.moveTo(x - w/2 + 15, y - h/2 + 5);
+        ctx.lineTo(x, y - h/2 - 40);
+        ctx.lineTo(x + w/2 - 15, y - h/2 + 5);
+        ctx.closePath();
+        ctx.fill();
+
+      } else if (b.id === 'masjid') {
+        // --- Mosque (Masjid Akad Nikah) ---
+        // Clean ivory/white marble base and walls
+        ctx.fillStyle = '#f4f4f5';
+        ctx.fillRect(x - w/2, y - h/2 + 15, w, h - 25);
+        
+        // Green geometric tile trims
+        ctx.fillStyle = '#059669'; // Emerald green trim
+        ctx.fillRect(x - w/2, y + h/2 - 18, w, 8); // Base trim
+        ctx.fillRect(x - w/2, y - h/2 + 15, w, 6);  // Roof trim
+
+        // Arch Windows
+        ctx.fillStyle = '#a7f3d0';
+        ctx.beginPath();
+        ctx.arc(x - 35, y, 10, Math.PI, 0);
+        ctx.fillRect(x - 45, y, 20, 15);
+        ctx.arc(x + 35, y, 10, Math.PI, 0);
+        ctx.fillRect(x + 25, y, 20, 15);
+        ctx.fill();
+
+        // Arch window grid lines
+        ctx.strokeStyle = '#047857';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x - 35, y - 10); ctx.lineTo(x - 35, y + 15);
+        ctx.moveTo(x + 35, y - 10); ctx.lineTo(x + 35, y + 15);
+        ctx.stroke();
+
+        // Grand Arched Doorway
+        ctx.fillStyle = '#065f46';
+        ctx.beginPath();
+        ctx.arc(x, y + h/2 - 38, 16, Math.PI, 0);
+        ctx.fillRect(x - 16, y + h/2 - 38, 32, 28);
+        ctx.fill();
+
+        // Glowing center in door
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(x, y + h/2 - 38, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Central Drum for Dome
+        ctx.fillStyle = '#e4e4e7';
+        ctx.fillRect(x - 30, y - h/2 - 10, 60, 25);
+
+        // Grand Golden Dome
+        ctx.fillStyle = '#fbbf24'; // Golden dome
+        ctx.beginPath();
+        ctx.arc(x, y - h/2 - 10, 28, Math.PI, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        // Golden Crescent Moon and Star on top of the dome
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(x, y - h/2 - 46, 6, Math.PI * 0.2, Math.PI * 1.5);
+        ctx.stroke();
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(x - 1.5, y - h/2 - 50, 3, 3); // Star point
+
+        // Side Minaret Towers (Left and Right)
+        const drawMinaret = (mx: number) => {
+          ctx.fillStyle = '#f4f4f5';
+          ctx.fillRect(mx - 10, y - h/2 - 15, 20, h + 5);
+          ctx.fillStyle = '#059669'; // Trim
+          ctx.fillRect(mx - 12, y - h/2 - 15, 24, 4);
+          ctx.fillRect(mx - 10, y + h/2 - 18, 20, 6);
+          
+          // Tiny green dome on top of Minaret
+          ctx.fillStyle = '#047857';
+          ctx.beginPath();
+          ctx.arc(mx, y - h/2 - 15, 10, Math.PI, 0);
+          ctx.closePath();
+          ctx.fill();
+
+          // Spire
+          ctx.fillRect(mx - 1, y - h/2 - 30, 2, 8);
+        };
+        drawMinaret(x - w/2 - 4);
+        drawMinaret(x + w/2 + 4);
+
+      } else if (b.id === 'gedung') {
+        // --- Grand Palace / Building (Gedung Resepsi Lama) ---
+        // Stately classic heritage masonry walls (Red Brick block structure)
+        ctx.fillStyle = '#991b1b'; // Dark brick red
+        ctx.fillRect(x - w/2, y - h/2 + 10, w, h - 22);
+
+        // Horizontal brick lines (details)
+        ctx.fillStyle = '#7f1d1d';
+        for (let ly = y - h/2 + 20; ly < y + h/2 - 12; ly += 12) {
+          ctx.fillRect(x - w/2, ly, w, 1.5);
+        }
+
+        // Grand Ivory Pillars (Pilar-Pilar Gedung Klasik)
+        ctx.fillStyle = '#f4f5f6'; // Clean pillars
+        const pillarPositions = [x - w/2 + 20, x - 25, x + 25, x + w/2 - 20];
+        pillarPositions.forEach(pxPos => {
+          ctx.fillRect(pxPos - 6, y - h/2 + 10, 12, h - 22);
+          ctx.fillStyle = '#e4e4e7'; // Pillar shadow details
+          ctx.fillRect(pxPos + 2, y - h/2 + 10, 4, h - 22);
+          ctx.fillStyle = '#f4f5f6';
+        });
+
+        // Elegant Triangular Classical Pediment (Roof)
+        ctx.fillStyle = '#450a0a'; // Deep wood/stone shingles
+        ctx.beginPath();
+        ctx.moveTo(x - w/2 - 15, y - h/2 + 10);
+        ctx.lineTo(x, y - h/2 - 35);
+        ctx.lineTo(x + w/2 + 15, y - h/2 + 10);
+        ctx.closePath();
+        ctx.fill();
+
+        // Pediment Trim border
+        ctx.strokeStyle = '#f4f4f5';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Grand Double Doors
+        ctx.fillStyle = '#451a03'; // Dark Mahogany
+        ctx.fillRect(x - 20, y + h/2 - 48, 40, 36);
+        ctx.fillStyle = '#78350f'; // Panel borders
+        ctx.strokeRect(x - 20, y + h/2 - 48, 40, 36);
+        
+        // Golden door knobs
+        ctx.fillStyle = '#eab308';
+        ctx.beginPath();
+        ctx.arc(x - 3, y + h/2 - 30, 2.5, 0, Math.PI * 2);
+        ctx.arc(x + 3, y + h/2 - 30, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Red Carpet Rolling Down out of the building
+        ctx.fillStyle = '#be123c'; // Royal Red carpet
+        ctx.fillRect(x - 16, y + h/2 - 12, 32, 25);
+        ctx.fillStyle = '#e11d48'; // Bright red borders
+        ctx.fillRect(x - 16, y + h/2 - 12, 2, 25);
+        ctx.fillRect(x + 14, y + h/2 - 12, 2, 25);
+
+        // Side lanterns with glowing yellow lights
+        ctx.fillStyle = '#eab308';
+        ctx.beginPath();
+        ctx.arc(x - 45, y - 5, 4, 0, Math.PI * 2);
+        ctx.arc(x + 45, y - 5, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+      } else if (b.id === 'pohonsakura') {
+        // --- Giant Sakura Tree (Pohon Sakura) ---
+        // Thick twisted ancient wood trunk
+        ctx.fillStyle = '#451a03'; // Dark bark
+        ctx.beginPath();
+        ctx.moveTo(x - 12, y + h/2 - 5);
+        ctx.quadraticCurveTo(x - 4, y, x - 6, y - h/2 + 15);
+        ctx.lineTo(x + 6, y - h/2 + 15);
+        ctx.quadraticCurveTo(x + 4, y, x + 12, y + h/2 - 5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Roots spreading out
+        ctx.fillRect(x - 22, y + h/2 - 10, 14, 5);
+        ctx.fillRect(x + 8, y + h/2 - 10, 14, 5);
+
+        // Massive cloud-like Sakura canopy (layers of pink overlapping circles)
+        const drawCanopyNode = (cx: number, cy: number, r: number, color: string) => {
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.fill();
+        };
+
+        // Dark/Shadow underlayer
+        drawCanopyNode(x - 35, y - 25, 34, '#f472b6'); // Medium pink
+        drawCanopyNode(x + 35, y - 25, 34, '#f472b6');
+        drawCanopyNode(x, y - 45, 40, '#f472b6');
+
+        // Bright blossom main layer
+        drawCanopyNode(x - 30, y - 30, 32, '#fbcfe8'); // Soft pink
+        drawCanopyNode(x + 30, y - 30, 32, '#fbcfe8');
+        drawCanopyNode(x, y - 50, 36, '#fbcfe8');
+        drawCanopyNode(x - 10, y - 15, 26, '#fbcfe8');
+        drawCanopyNode(x + 10, y - 15, 26, '#fbcfe8');
+
+        // Highlight layer (fluffy top)
+        drawCanopyNode(x - 15, y - 48, 22, '#fdf2f8'); // Lightest pink
+        drawCanopyNode(x + 15, y - 48, 22, '#fdf2f8');
+        drawCanopyNode(x, y - 60, 24, '#fdf2f8');
+
+        // Hanging red paper lanterns
+        const drawHangingLantern = (lx: number, ly: number) => {
+          ctx.fillStyle = '#b45309'; // string
+          ctx.fillRect(lx - 1, ly - 15, 2, 15);
+          
+          ctx.fillStyle = '#ef4444'; // Red lantern ball
+          ctx.beginPath();
+          ctx.arc(lx, ly, 7, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#fef08a'; // Glowing yellow core
+          ctx.beginPath();
+          ctx.arc(lx, ly, 3, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#fbbf24'; // gold caps
+          ctx.fillRect(lx - 4, ly - 8, 8, 2);
+          ctx.fillRect(lx - 4, ly + 6, 8, 2);
+        };
+        drawHangingLantern(x - 28, y - 5);
+        drawHangingLantern(x + 28, y - 5);
+
+        // Carpet of fallen pink petals on ground
+        ctx.fillStyle = '#fbcfe8';
+        for (let i = 0; i < 15; i++) {
+          const pxOffset = Math.sin(i * 123) * 45;
+          const pyOffset = Math.cos(i * 456) * 15;
+          ctx.fillRect(x + pxOffset - 2, y + h/2 - 12 + pyOffset, 4, 3);
+        }
+
+        // Falling animated petals drifting in the breeze
+        ctx.fillStyle = '#f472b6';
+        for (let i = 0; i < 3; i++) {
+          const speed = 0.5 + (i * 0.2);
+          const pxOffset = ((animFrame.current * speed + i * 140) % 90) - 45;
+          const pyOffset = ((animFrame.current * speed * 1.2 + i * 80) % 70) - 20;
+          ctx.fillRect(x + pxOffset, y - 20 + pyOffset, 3.5, 2.5);
+        }
+
+      } else if (b.id === 'giftbox') {
+        // --- Treasure Chest (Harta Karun) ---
+        // Sturdy vintage wooden body
+        ctx.fillStyle = '#78350f'; // Dark mahogany brown
+        ctx.fillRect(x - w/2 + 10, y - h/2 + 20, w - 20, h - 30);
+        ctx.strokeStyle = '#451a03';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x - w/2 + 10, y - h/2 + 20, w - 20, h - 30);
+
+        // Arched lid of the chest
+        ctx.fillStyle = '#9a3412'; // Lighter brown lid
+        ctx.beginPath();
+        ctx.arc(x, y - h/2 + 20, w/2 - 10, Math.PI, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Horizontal wooden texture lines
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(x - w/2 + 12, y - 5, w - 24, 2.5);
+        ctx.fillRect(x - w/2 + 12, y + 10, w - 24, 2.5);
+
+        // Heavy metallic gold band straps
+        ctx.fillStyle = '#eab308'; // Bright gold
+        ctx.fillRect(x - w/2 + 18, y - h/2 + 8, 8, h - 18);
+        ctx.fillRect(x + w/2 - 26, y - h/2 + 8, 8, h - 18);
+        // Horizontal band strap
+        ctx.fillRect(x - w/2 + 10, y - h/2 + 20, w - 20, 5);
+
+        // Golden studs on bands
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(x - w/2 + 21, y, 2, 2);
+        ctx.fillRect(x - w/2 + 21, y + 15, 2, 2);
+        ctx.fillRect(x + w/2 - 23, y, 2, 2);
+        ctx.fillRect(x + w/2 - 23, y + 15, 2, 2);
+
+        // Large golden keyhole lockplate in the center
+        ctx.fillStyle = '#f59e0b'; // Shiny gold plate
+        ctx.fillRect(x - 12, y - h/2 + 35, 24, 24);
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(x - 12, y - h/2 + 35, 24, 24);
+
+        // Keyhole
+        ctx.fillStyle = '#1e1b4b'; // Deep dark slot
+        ctx.beginPath();
+        ctx.arc(x, y - h/2 + 43, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(x - 1.5, y - h/2 + 43, 3, 9);
+
+        // Magical gold/yellow sparkles floating up
+        ctx.fillStyle = '#fef08a';
+        for (let i = 0; i < 3; i++) {
+          const sparkleX = x + Math.sin(animFrame.current * 0.05 + i * 2) * 20;
+          const sparkleY = y - 25 - ((animFrame.current * 0.6 + i * 15) % 35);
+          ctx.fillRect(sparkleX, sparkleY, 3, 3);
+        }
+
+      } else if (b.id === 'kamera') {
+        // --- Unrolled Paper Scroll (Gulungan Kertas) ---
+        // Wooden rollers (spindles) at top and bottom
+        ctx.fillStyle = '#78350f'; // Roller color
+        ctx.fillRect(x - w/2 - 4, y - h/2 + 12, w + 8, 8); // Top roller
+        ctx.fillRect(x - w/2 - 4, y + h/2 - 20, w + 8, 8); // Bottom roller
+
+        // Shiny gold knobs on spindles ends
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(x - w/2 - 8, y - h/2 + 10, 4, 12);
+        ctx.fillRect(x + w/2 + 4, y - h/2 + 10, 4, 12);
+        ctx.fillRect(x - w/2 - 8, y + h/2 - 22, 4, 12);
+        ctx.fillRect(x + w/2 + 4, y + h/2 - 22, 4, 12);
+
+        // Unrolled warm parchment paper body
+        ctx.fillStyle = '#fef3c7'; // Cream parchment paper
+        ctx.fillRect(x - w/2 + 2, y - h/2 + 20, w - 4, h - 40);
+        ctx.strokeStyle = '#b45309';
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(x - w/2 + 2, y - h/2 + 20, w - 4, h - 40);
+
+        // Subtle horizontal calligraphy/inscription lines on paper
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(x - 25, y - 14, 50, 2);
+        ctx.fillRect(x - 32, y - 6, 64, 2);
+        ctx.fillRect(x - 20, y + 2, 40, 2);
+
+        // Tiny pixel heart design on the scroll
+        ctx.fillStyle = '#ec4899'; // Hot pink heart
+        ctx.beginPath();
+        ctx.arc(x - 4, y + 14, 3, 0, Math.PI * 2);
+        ctx.arc(x + 4, y + 14, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(x - 7.5, y + 14);
+        ctx.lineTo(x, y + 22);
+        ctx.lineTo(x + 7.5, y + 14);
+        ctx.closePath();
+        ctx.fill();
+
+        // Magic sparkling particles drifting around
+        ctx.fillStyle = '#f59e0b';
+        for (let i = 0; i < 3; i++) {
+          const pxOffset = Math.sin(animFrame.current * 0.1 + i * 20) * (w/2 + 5);
+          const pyOffset = Math.cos(animFrame.current * 0.08 + i * 15) * 20;
+          ctx.fillRect(x + pxOffset, y + pyOffset, 2.5, 2.5);
+        }
+
+      } else if (b.id === 'buku') {
+        // --- Open Guest Registry Book on a Table ---
+        // Wooden desk/table
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(x - w/2 + 10, y - h/2 + 25, w - 20, h - 35);
+        ctx.fillStyle = '#7c2d12'; // table legs
+        ctx.fillRect(x - w/2 + 15, y + h/2 - 10, 8, 12);
+        ctx.fillRect(x + w/2 - 23, y + h/2 - 10, 8, 12);
+
+        // Open book pages
+        ctx.fillStyle = '#f4f4f5'; // white pages
+        ctx.fillRect(x - 35, y - 12, 34, 22);
+        ctx.fillRect(x + 1, y - 12, 34, 22);
+        
+        // Book leather cover backing
+        ctx.fillStyle = '#450a0a';
+        ctx.fillRect(x - 38, y - 14, 76, 2);
+        ctx.fillRect(x - 38, y + 10, 76, 2);
+        ctx.fillRect(x - 38, y - 14, 2, 26);
+        ctx.fillRect(x + 36, y - 14, 2, 26);
+
+        // Text lines in book
+        ctx.fillStyle = '#a1a1aa';
+        ctx.fillRect(x - 30, y - 6, 24, 1.5);
+        ctx.fillRect(x - 30, y - 1, 20, 1.5);
+        ctx.fillRect(x - 30, y + 4, 24, 1.5);
+        ctx.fillRect(x + 6, y - 6, 24, 1.5);
+        ctx.fillRect(x + 6, y - 1, 24, 1.5);
+        ctx.fillRect(x + 6, y + 4, 18, 1.5);
+
+      } else if (b.id === 'portal') {
+        // --- Mystical Rotating Glowing Portal ---
+        const rotTime = animFrame.current * 0.06;
+        
+        // Floating platform pedestal
+        ctx.fillStyle = '#3f3f46';
+        ctx.fillRect(x - 30, y + h/2 - 20, 60, 10);
+        ctx.fillStyle = '#18181b';
+        ctx.fillRect(x - 24, y + h/2 - 10, 48, 10);
+
+        // Glowing outer circle ring
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 4.5;
+        ctx.beginPath();
+        ctx.arc(x, y - 10, 24 + Math.sin(rotTime) * 3, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Inner galaxy layers
+        ctx.fillStyle = '#1e1b4b';
+        ctx.beginPath();
+        ctx.arc(x, y - 10, 20, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#4f46e5';
+        ctx.beginPath();
+        ctx.arc(x, y - 10, 14 + Math.cos(rotTime) * 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#a855f7';
+        ctx.beginPath();
+        ctx.arc(x, y - 10, 8 + Math.sin(rotTime * 2) * 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Light core
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(x, y - 10, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Stars rotating around
+        ctx.fillStyle = '#38bdf8';
+        for (let i = 0; i < 4; i++) {
+          const starAngle = rotTime + (i * Math.PI / 2);
+          const starDist = 18 + Math.sin(rotTime + i) * 4;
+          const starX = x + Math.cos(starAngle) * starDist;
+          const starY = y - 10 + Math.sin(starAngle) * starDist;
+          ctx.fillRect(starX - 1.5, starY - 1.5, 3, 3);
+        }
+      }
+
+      // --- TEXT LABEL & BADGES (Consistent, high readability HUD signs) ---
+      // Signboard wood post
       ctx.fillStyle = '#78350f';
-      ctx.fillRect(x - 16, y + h / 2 - 40, 32, 40);
-      // Brass doorknob
-      ctx.fillStyle = '#eab308';
-      ctx.beginPath();
-      ctx.arc(x + 10, y + h / 2 - 20, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Circular station logo banner
-      ctx.fillStyle = '#18181b';
-      ctx.beginPath();
-      ctx.arc(x, y - 8, 22, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Draw Station Icon symbol
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '16px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(b.icon, x, y - 8);
+      ctx.fillRect(x - 4, y - h / 2 - 38, 8, 38);
 
       // Station Text Label sign board on top of the roof
-      ctx.fillStyle = 'rgba(24, 24, 27, 0.85)';
+      ctx.fillStyle = 'rgba(24, 24, 27, 0.9)';
       ctx.fillRect(x - 65, y - h / 2 - 58, 130, 22);
       
       // Border for label
       const questStatus = quests.find(q => q.targetId === b.id);
       ctx.strokeStyle = questStatus?.completed ? '#10b981' : '#f43f5e'; // Green if done, pink if open
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 2;
       ctx.strokeRect(x - 65, y - h / 2 - 58, 130, 22);
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 9.5px sans-serif';
+      ctx.font = 'bold 9px sans-serif';
       ctx.fillText(b.name, x, y - h / 2 - 47);
 
       // Tiny green checkmark badge if visited
@@ -607,64 +1056,69 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
     ctx.font = 'bold 8.5px sans-serif';
     ctx.fillText('KAMU', px, py - 27 + bobOffset);
 
+    ctx.restore();
   }, [player, playerDir, isMoving, quests]);
 
-  // Virtual Shadow Joystick Touch Event Handlers
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    // Prevent joystick triggers on UI buttons, HUD panel, or interaction buttons
-    const target = e.target as HTMLElement;
-    if (
-      target.closest('button') || 
-      target.closest('a') || 
-      target.closest('#quest-hud-tracker') || 
-      target.id === 'interact-btn-mobile'
-    ) {
-      return; 
-    }
-
+  // Virtual Locked Joystick Touch Event Handlers
+  const handleJoystickTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.stopPropagation();
     const touch = e.touches[0];
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
 
     setJoystick({
       active: true,
-      startX: x,
-      startY: y,
-      curX: x,
-      curY: y
+      startX: cx,
+      startY: cy,
+      curX: touch.clientX,
+      curY: touch.clientY
     });
 
-    joystickVector.current = { dx: 0, dy: 0, active: true };
+    const dx = touch.clientX - cx;
+    const dy = touch.clientY - cy;
+    const dist = Math.hypot(dx, dy);
+    
+    let normX = 0;
+    let normY = 0;
+    if (dist > 0) {
+      normX = dx / dist;
+      normY = dy / dist;
+    }
+
+    joystickVector.current = { dx: normX, dy: normY, active: true };
     setIsMoving(true);
   };
 
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!joystickVector.current.active) return;
-    
+  const handleJoystickTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    if (!joystick.active) return;
+
     const touch = e.touches[0];
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = touch.clientX - rect.left;
-    const y = touch.clientY - rect.top;
+    const cx = joystick.startX;
+    const cy = joystick.startY;
 
-    const deltaX = x - joystick.startX;
-    const deltaY = y - joystick.startY;
-    const distance = Math.hypot(deltaX, deltaY);
-    const maxRadius = 45;
+    const dx = touch.clientX - cx;
+    const dy = touch.clientY - cy;
+    const dist = Math.hypot(dx, dy);
+    const maxRadius = 24; // boundary limit for visual knob movement
 
-    let finalX = x;
-    let finalY = y;
+    let finalX = touch.clientX;
+    let finalY = touch.clientY;
     let normX = 0;
     let normY = 0;
 
-    if (distance > 0) {
-      normX = deltaX / distance;
-      normY = deltaY / distance;
+    if (dist > 0) {
+      normX = dx / dist;
+      normY = dy / dist;
 
-      if (distance > maxRadius) {
-        finalX = joystick.startX + normX * maxRadius;
-        finalY = joystick.startY + normY * maxRadius;
+      if (dist > maxRadius) {
+        finalX = cx + normX * maxRadius;
+        finalY = cy + normY * maxRadius;
       }
+    } else {
+      finalX = cx;
+      finalY = cy;
     }
 
     setJoystick(prev => ({
@@ -673,14 +1127,11 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
       curY: finalY
     }));
 
-    joystickVector.current = {
-      dx: normX,
-      dy: normY,
-      active: true
-    };
+    joystickVector.current = { dx: normX, dy: normY, active: true };
   };
 
-  const handleTouchEnd = () => {
+  const handleJoystickTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    e.stopPropagation();
     setJoystick({
       active: false,
       startX: 0,
@@ -696,12 +1147,53 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
     <div 
       id="game-canvas-container" 
       className="relative flex-1 flex flex-col min-h-0 bg-emerald-950 overflow-hidden select-none"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
     >
       
+      {/* 🧭 Retro Pixel Mini Map in top-left corner */}
+      <div 
+        id="retro-minimap" 
+        className="absolute top-4 left-4 z-40 w-32 h-24 bg-zinc-950/85 border-4 border-black rounded-xl p-1.5 shadow-2xl flex flex-col justify-between select-none pointer-events-none"
+      >
+        <span className="text-[7.5px] text-pink-500 font-extrabold uppercase tracking-widest text-center border-b border-zinc-800 pb-0.5" style={{ fontFamily: 'var(--font-retro)' }}>
+          🗺️ PETA MINI DESA
+        </span>
+        <div className="relative flex-1 bg-[#065f46] rounded-md overflow-hidden mt-1 border border-zinc-800/80">
+          {/* Mini River representation */}
+          <div className="absolute top-0 bottom-0 bg-blue-500/50" style={{ left: '5.5%', width: '6.1%' }} />
+          {/* Mini Bridge representation */}
+          <div className="absolute h-0.5 bg-amber-800" style={{ left: '4.5%', width: '8.3%', top: '43.6%' }} />
+          
+          {/* Dynamic Buildings indicators */}
+          {buildings.map(b => {
+            const bx = (b.x / worldWidth) * 100;
+            const by = (b.y / worldHeight) * 100;
+            return (
+              <div 
+                key={`mini-${b.id}`}
+                className="absolute w-2 h-2 rounded-xs border border-black/50 flex items-center justify-center"
+                style={{ 
+                  left: `${bx}%`, 
+                  top: `${by}%`, 
+                  transform: 'translate(-50%, -50%)',
+                  backgroundColor: b.color 
+                }}
+              />
+            );
+          })}
+
+          {/* Player Blinking Dot */}
+          <div 
+            className="absolute w-2 h-2 bg-pink-500 rounded-full border border-white animate-pulse"
+            style={{ 
+              left: `${(player.x / worldWidth) * 100}%`, 
+              top: `${(player.y / worldHeight) * 100}%`,
+              transform: 'translate(-50%, -50%)',
+              boxShadow: '0 0 4px #ec4899'
+            }}
+          />
+        </div>
+      </div>
+
       {/* Scrollable Viewport with Camera Centered Tracking */}
       <div 
         id="camera-scroller"
@@ -709,13 +1201,14 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
       >
         <div 
           className="relative"
-          style={{ width: worldWidth, height: worldHeight }}
+          style={{ width: worldWidth * zoom, height: worldHeight * zoom }}
         >
           {/* Real HTML5 Game Canvas */}
           <canvas
             ref={canvasRef}
-            width={worldWidth}
-            height={worldHeight}
+            width={worldWidth * zoom}
+            height={worldHeight * zoom}
+            style={{ width: worldWidth * zoom, height: worldHeight * zoom }}
             className="absolute inset-0 block bg-emerald-900"
             id="wae-game-canvas"
           />
@@ -725,8 +1218,8 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
             <div 
               className="absolute pointer-events-none z-30 animate-bounce"
               style={{
-                left: player.x,
-                top: player.y - 72,
+                left: player.x * zoom,
+                top: (player.y - 72) * zoom,
                 transform: 'translateX(-50%)'
               }}
             >
@@ -742,12 +1235,12 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
             <button
               key={`target-${b.id}`}
               onClick={() => handleFastTravel(b)}
-              className="absolute cursor-pointer border border-transparent focus:outline-hidden"
+              className="absolute cursor-pointer border border-transparent focus:outline-hidden animate-pulse hover:border-white/20"
               style={{
-                left: b.x - b.width / 2,
-                top: b.y - b.height / 2 - 30,
-                width: b.width,
-                height: b.height + 40,
+                left: (b.x - b.width / 2) * zoom,
+                top: (b.y - b.height / 2 - 30) * zoom,
+                width: b.width * zoom,
+                height: (b.height + 40) * zoom,
                 zIndex: 20
               }}
               title={`Klik untuk pergi ke ${b.name}`}
@@ -772,43 +1265,42 @@ export default function GameCanvas({ guestName, onInteract, quests }: GameCanvas
         </button>
       )}
 
-      {/* Dynamic Floating Shadow Joystick (Joystick Bayangan) */}
-      {joystick.active && (
-        <div 
-          className="absolute pointer-events-none z-50 select-none animate-fade-in"
-          style={{
-            left: joystick.startX - 50,
-            top: joystick.startY - 50,
-            width: 100,
-            height: 100,
-          }}
-        >
-          {/* Outer Ring */}
-          <div className="w-full h-full rounded-full bg-black/40 border-2 border-white/50 flex items-center justify-center shadow-2xl relative backdrop-blur-[2px]">
-            {/* Guide Arrows */}
-            <div className="absolute top-1 text-[8px] text-white/45 font-bold">▲</div>
-            <div className="absolute bottom-1 text-[8px] text-white/45 font-bold">▼</div>
-            <div className="absolute left-1 text-[8px] text-white/45 font-bold">◀</div>
-            <div className="absolute right-1 text-[8px] text-white/45 font-bold">▶</div>
-            
-            {/* Inner Draggable Knob (Joystick Bayangan) */}
-            <div 
-              className="absolute w-12 h-12 bg-[#6ec04a] rounded-full border-2 border-zinc-950 flex items-center justify-center shadow-lg"
-              style={{
-                transform: `translate(${joystick.curX - joystick.startX}px, ${joystick.curY - joystick.startY}px)`
-              }}
-            >
-              {/* Inner core accent */}
-              <div className="w-4 h-4 rounded-full bg-white/90 animate-pulse" />
-            </div>
+      {/* Locked Virtual Joystick D-Pad in the bottom-left corner */}
+      <div 
+        id="locked-joystick-dpad"
+        onTouchStart={handleJoystickTouchStart}
+        onTouchMove={handleJoystickTouchMove}
+        onTouchEnd={handleJoystickTouchEnd}
+        onTouchCancel={handleJoystickTouchEnd}
+        className="absolute bottom-16 left-6 z-40 w-24 h-24 bg-black/75 border-4 border-zinc-950 rounded-full flex items-center justify-center shadow-2xl select-none md:hidden"
+      >
+        {/* Outer Ring directions */}
+        <div className="absolute top-1 text-[8px] text-zinc-500 font-bold">▲</div>
+        <div className="absolute bottom-1 text-[8px] text-zinc-500 font-bold">▼</div>
+        <div className="absolute left-1.5 text-[8px] text-zinc-500 font-bold">◀</div>
+        <div className="absolute right-1.5 text-[8px] text-zinc-500 font-bold">▶</div>
+        
+        {/* Center decorative ring */}
+        <div className="w-16 h-16 rounded-full border border-zinc-800/50 flex items-center justify-center relative">
+          {/* Inner Draggable Knob */}
+          <div 
+            className="w-10 h-10 bg-gradient-to-br from-[#86efac] via-[#22c55e] to-[#15803d] rounded-full border-2 border-black flex items-center justify-center shadow-lg cursor-pointer"
+            style={{
+              transform: joystick.active
+                ? `translate(${joystick.curX - joystick.startX}px, ${joystick.curY - joystick.startY}px)`
+                : 'translate(0px, 0px)'
+            }}
+          >
+            {/* Inner red dot for authentic retro style */}
+            <div className="w-3.5 h-3.5 bg-red-600 rounded-full border border-black shadow-inner animate-pulse" />
           </div>
         </div>
-      )}
+      </div>
 
       {/* Simple touch indicator overlay */}
-      <div className="absolute bottom-16 left-6 z-30 pointer-events-none flex flex-col space-y-1 md:hidden">
+      <div className="absolute bottom-16 left-32 z-30 pointer-events-none flex flex-col space-y-1 md:hidden">
         <div className="bg-zinc-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-zinc-800 text-[8px] font-retro text-zinc-300 shadow-md">
-          <span className="text-yellow-400">💡 HP Tip:</span> Sentuh & Seret di mana saja untuk mengaktifkan <span className="text-pink-400 font-extrabold">Joystick Bayangan</span>!
+          <span className="text-yellow-400">💡 HP Tip:</span> Gunakan <span className="text-pink-400 font-extrabold">Joystick Kunci</span> di pojok kiri bawah untuk menjelajah!
         </div>
       </div>
 
